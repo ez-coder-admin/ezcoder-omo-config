@@ -1,0 +1,25 @@
+{
+  "name": "ezcoder-omo-config",
+  "version": "1.0.0",
+  "description": "OpenCode oh-my-opencode config switcher CLI",
+  "preferGlobal": true,
+  "bin": {
+    "omo": "./bin/omo.js"
+  },
+  "files": [
+    "bin",
+    "lib"
+  ],
+  "keywords": [
+    "opencode",
+    "oh-my-opencode",
+    "config-switcher",
+    "cli"
+  ],
+  "license": "MIT",
+  "author": "ezcoder",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ez-coder-admin/ezcoder-omo-config"
+  }
+}

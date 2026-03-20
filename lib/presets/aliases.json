@@ -1,0 +1,7 @@
+{
+  "default": ["d"],
+  "gpt": ["g"],
+  "gpt-mini": ["gm"],
+  "code": ["c"],
+  "mimo": ["m"]
+}

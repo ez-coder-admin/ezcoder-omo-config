@@ -1,0 +1,25 @@
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/dev/assets/oh-my-opencode.schema.json",
+  "agents": {
+    "sisyphus": { "model": "openai/gpt-4" },
+    "hephaestus": { "model": "openai/gpt-5.3-codex" },
+    "oracle": { "model": "github-copilot/claude-opus-4-6" },
+    "librarian": { "model": "github-copilot/claude-opus-4-5" },
+    "explore": { "model": "github-copilot/claude-opus-4-5" },
+    "multimodal-looker": { "model": "openai/gpt-5.4" },
+    "prometheus": { "model": "github-copilot/claude-opus-4-6" },
+    "metis": { "model": "github-copilot/claude-opus-4-5" },
+    "momus": { "model": "github-copilot/claude-opus-4-5" },
+    "atlas": { "model": "github-copilot/claude-opus-4-6" }
+  },
+  "categories": {
+    "visual-engineering": { "model": "openai/gpt-5.4" },
+    "ultrabrain": { "model": "github-copilot/claude-opus-4-6" },
+    "deep": { "model": "openai/gpt-5.3-codex" },
+    "artistry": { "model": "github-copilot/claude-opus-4-5" },
+    "quick": { "model": "openai/gpt-4" },
+    "unspecified-low": { "model": "openai/gpt-4" },
+    "unspecified-high": { "model": "github-copilot/claude-opus-4-6" },
+    "writing": { "model": "github-copilot/claude-opus-4-5" }
+  }
+}

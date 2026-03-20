@@ -1,0 +1,25 @@
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/dev/assets/oh-my-opencode.schema.json",
+  "agents": {
+    "sisyphus": { "model": "opencode/minimax-m2.5-free" },
+    "hephaestus": { "model": "opencode/mimo-v2-pro-free" },
+    "oracle": { "model": "opencode/mimo-v2-pro-free" },
+    "librarian": { "model": "opencode/minimax-m2.5-free" },
+    "explore": { "model": "opencode/minimax-m2.5-free" },
+    "multimodal-looker": { "model": "opencode/mimo-v2-pro-free" },
+    "prometheus": { "model": "opencode/mimo-v2-pro-free" },
+    "metis": { "model": "opencode/mimo-v2-pro-free" },
+    "momus": { "model": "opencode/minimax-m2.5-free" },
+    "atlas": { "model": "opencode/mimo-v2-pro-free" }
+  },
+  "categories": {
+    "visual-engineering": { "model": "opencode/mimo-v2-pro-free" },
+    "ultrabrain": { "model": "opencode/mimo-v2-pro-free" },
+    "deep": { "model": "opencode/mimo-v2-pro-free" },
+    "artistry": { "model": "opencode/minimax-m2.5-free" },
+    "quick": { "model": "opencode/minimax-m2.5-free" },
+    "unspecified-low": { "model": "opencode/minimax-m2.5-free" },
+    "unspecified-high": { "model": "opencode/mimo-v2-pro-free" },
+    "writing": { "model": "opencode/minimax-m2.5-free" }
+  }
+}
