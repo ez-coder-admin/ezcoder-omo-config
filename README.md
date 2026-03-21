@@ -12,6 +12,16 @@ OpenCode [oh-my-opencode](https://github.com/code-yeongyu/oh-my-opencode) 配置
 npm install -g ezcoder-omo-config
 ```
 
+> 如果 npm 默认源不是官方源（如国内镜像），请先切换回官方源：
+> ```bash
+> npm config set registry https://registry.npmjs.org/
+> npm install -g ezcoder-omo-config
+> ```
+> 或直接指定源安装，无需修改全局配置：
+> ```bash
+> npm install -g ezcoder-omo-config --registry=https://registry.npmjs.org/
+> ```
+
 ### 方式二：从 GitHub 安装
 
 ```bash

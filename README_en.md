@@ -12,6 +12,16 @@ Switch between different agent/model presets with a single command — no manual
 npm install -g ezcoder-omo-config
 ```
 
+> If your npm registry is not the official one (e.g. China mirrors), switch back first:
+> ```bash
+> npm config set registry https://registry.npmjs.org/
+> npm install -g ezcoder-omo-config
+> ```
+> Or specify the registry directly without modifying global config:
+> ```bash
+> npm install -g ezcoder-omo-config --registry=https://registry.npmjs.org/
+> ```
+
 ### Option 2: From GitHub
 
 ```bash
