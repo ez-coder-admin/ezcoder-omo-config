@@ -26,8 +26,8 @@
     { "name": "mimo", "alias": "m", "desc_zh": "Hephaestus 用 MiMo V2 Pro Free", "desc_en": "Hephaestus uses MiMo V2 Pro Free" }
   ],
   "helpPage": {
-    "desc_zh": "点击卡片即可切换预设。",
-    "desc_en": "Click a card to switch preset.",
+    "desc_zh": "点击卡片即可切换预设。可通过「添加配置」按钮创建自定义预设。",
+    "desc_en": "Click a card to switch preset. Use \"Add Preset\" button to create custom presets.",
     "note_zh": "注意：切换预设后需要重启 OpenCode 才能生效。",
     "note_en": "Note: Changes take effect after restarting OpenCode.",
     "section_switch_zh": "切换预设",
@@ -36,6 +36,8 @@
     "section_list_en": "List Presets",
     "section_web_zh": "Web UI",
     "section_web_en": "Web UI",
+    "custom_preset_zh": "自定义配置",
+    "custom_preset_en": "Custom Presets",
     "github_zh": "GitHub 主页",
     "github_en": "GitHub Repo"
   }

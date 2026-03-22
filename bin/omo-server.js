@@ -14,6 +14,36 @@ const HELP_FILE = path.join(__dirname, "..", "lib", "help.json");
 const CONFIG_DIR = path.join(os.homedir(), ".config", "opencode");
 const LIVE_FILE = path.join(CONFIG_DIR, "oh-my-opencode.jsonc");
 const ROLE_NAME_FILE = path.join(CONFIG_DIR, "oh-my-opencode-role-name.json");
+const CUSTOM_PRESETS_DIR = path.join(CONFIG_DIR, "omo-custom-presets");
+
+// Ensure custom presets directory exists
+if (!fs.existsSync(CUSTOM_PRESETS_DIR)) {
+  fs.mkdirSync(CUSTOM_PRESETS_DIR, { recursive: true });
+}
+
+// ── Custom Presets Functions ───────────────────────────────────────────────
+function getCustomPresets() {
+  const files = fs.readdirSync(CUSTOM_PRESETS_DIR).filter(f => f.endsWith('.json'));
+  return files.map(f => {
+    const data = JSON.parse(fs.readFileSync(path.join(CUSTOM_PRESETS_DIR, f), 'utf8'));
+    const name = f.replace('.json', '');
+    return { name, ...data };
+  });
+}
+
+function saveCustomPreset(name, data) {
+  const file = path.join(CUSTOM_PRESETS_DIR, `${name}.json`);
+  fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
+}
+
+function deleteCustomPreset(name) {
+  const file = path.join(CUSTOM_PRESETS_DIR, `${name}.json`);
+  if (fs.existsSync(file)) fs.unlinkSync(file);
+}
+
+function isCustomPreset(name) {
+  return fs.existsSync(path.join(CUSTOM_PRESETS_DIR, `${name}.json`));
+}
 
 // ── Help Data ─────────────────────────────────────────────────────────────────
 const HELP_DATA = JSON.parse(fs.readFileSync(HELP_FILE, "utf8"));
@@ -166,7 +196,25 @@ const LANG = {
   failLoad: { zh: "加载失败", en: "Load failed" },
   failSwitch: { zh: "切换失败", en: "Switch failed" },
   poweredBy: { zh: "Powered by", en: "Powered by" },
-  helpTitle: { zh: "帮助", en: "Help" }
+  helpTitle: { zh: "帮助", en: "Help" },
+  addPreset: { zh: "添加配置", en: "Add Preset" },
+  editPreset: { zh: "编辑配置", en: "Edit Preset" },
+  presetName: { zh: "配置名称", en: "Preset Name" },
+  presetNameHint: { zh: "只允许字母、数字、下划线、连字符", en: "Letters, numbers, - and _ only" },
+  agents: { zh: "Agents (JSON)", en: "Agents (JSON)" },
+  agentsHint: { zh: "键值对格式，如: {\"Sisyphus\": {\"model\": \"claude-3-5-sonnet-20241002\"}}", en: "Key-value format, e.g.: {\"Sisyphus\": {\"model\": \"claude-3-5-sonnet-20241002\"}}" },
+  categories: { zh: "Categories (JSON)", en: "Categories (JSON)" },
+  categoriesHint: { zh: "可选，如: {\"deep\": \"ultrabrain\"}", en: "Optional, e.g.: {\"deep\": \"ultrabrain\"}" },
+  save: { zh: "保存", en: "Save" },
+  cancel: { zh: "取消", en: "Cancel" },
+  delete: { zh: "删除", en: "Delete" },
+  deleteConfirm: { zh: "确定删除此配置？", en: "Delete this preset?" },
+  saveSuccess: { zh: "保存成功！", en: "Saved!" },
+  deleteSuccess: { zh: "已删除", en: "Deleted" },
+  nameRequired: { zh: "请输入配置名称", en: "Name is required" },
+  agentsRequired: { zh: "请输入agents内容", en: "Agents content is required" },
+  invalidJson: { zh: "JSON格式无效", en: "Invalid JSON format" },
+  custom: { zh: "自定义", en: "Custom" }
 };
 
 function makeHTML(lang) {
@@ -236,16 +284,41 @@ function makeHTML(lang) {
     .modal-github { margin-top: 1rem; text-align: center; }
     .modal-body code { background: #0f172a; padding: 0.1rem 0.4rem; border-radius: 4px; color: #38bdf8; font-size: 0.8rem; }
 
+    .header-actions { display: flex; align-items: center; gap: 1rem; }
+    .add-btn { background: #38bdf8; color: #0f172a; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .add-btn:hover { background: #0ea5e9; }
+    .form-group { margin-bottom: 1rem; }
+    .form-label { display: block; color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.375rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .form-input, .form-textarea { width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #e2e8f0; padding: 0.625rem; font-size: 0.875rem; }
+    .form-input:focus, .form-textarea:focus { outline: none; border-color: #38bdf8; }
+    .form-textarea { min-height: 120px; font-family: monospace; }
+    .form-hint { color: #64748b; font-size: 0.75rem; margin-top: 0.375rem; }
+    .form-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.25rem; }
+    .form-btn { padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .form-btn-primary { background: #38bdf8; color: #0f172a; border: none; }
+    .form-btn-primary:hover { background: #0ea5e9; }
+    .form-btn-secondary { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+    .form-btn-secondary:hover { color: #e2e8f0; border-color: #475569; }
+    .delete-btn { position: absolute; top: 0.75rem; right: 0.75rem; background: #7f1d1d; color: #fca5a5; border: none; width: 1.5rem; height: 1.5rem; border-radius: 4px; font-size: 0.875rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .delete-btn:hover { background: #991b1b; color: #fecaca; }
+    .card.custom { border-style: dashed; }
+    .card.custom::before { content: 'Custom'; position: absolute; top: 0.75rem; left: 0.75rem; background: #7c3aed; color: #fff; font-size: 0.625rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px; letter-spacing: 0.05em; }
+    .edit-btn { position: absolute; bottom: 0.75rem; right: 0.75rem; background: #1e293b; color: #64748b; border: 1px solid #334155; width: 1.5rem; height: 1.5rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .edit-btn:hover { border-color: #38bdf8; color: #38bdf8; }
+
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
       <h1>🤖 OMO Config Switcher</h1>
-      <div class="lang-btn">
-        <a href="?lang=en" ${lang === "en" ? 'class="active"' : ""}>EN</a>
-        <span>/</span>
-        <a href="?lang=zh" ${lang === "zh" ? 'class="active"' : ""}>中文</a>
+      <div class="header-actions">
+        <button class="add-btn" id="addPresetBtn">+ ${lang === "en" ? "Add Preset" : "添加配置"}</button>
+        <div class="lang-btn">
+          <a href="?lang=en" ${lang === "en" ? 'class="active"' : ""}>EN</a>
+          <span>/</span>
+          <a href="?lang=zh" ${lang === "zh" ? 'class="active"' : ""}>中文</a>
+        </div>
       </div>
     </div>
     <p class="subtitle">${lang === "en" ? HELP_DATA.subtitle.en : HELP_DATA.subtitle.zh}</p>
@@ -289,6 +362,39 @@ function makeHTML(lang) {
     </div>
   </div>
 
+  <div class="modal-overlay" id="formModalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="formModalTitle">${t("addPreset")}</span>
+        <button class="modal-close" id="formModalClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="presetForm">
+          <input type="hidden" id="editName" value="">
+          <div class="form-group">
+            <label class="form-label" for="presetNameInput">${t("presetName")}</label>
+            <input type="text" class="form-input" id="presetNameInput" required pattern="^[a-zA-Z0-9-_]+$" placeholder="my-preset">
+            <div class="form-hint">${t("presetNameHint")}</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="agentsInput">${t("agents")}</label>
+            <textarea class="form-textarea" id="agentsInput" required placeholder='{"Sisyphus": {"model": "claude-3-5-sonnet-20241002"}}'></textarea>
+            <div class="form-hint">${t("agentsHint")}</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="categoriesInput">${t("categories")}</label>
+            <textarea class="form-textarea" id="categoriesInput" placeholder='{"deep": "ultrabrain"}'></textarea>
+            <div class="form-hint">${t("categoriesHint")}</div>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="form-btn form-btn-secondary" id="formCancelBtn">${t("cancel")}</button>
+            <button type="submit" class="form-btn form-btn-primary">${t("save")}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <script>
@@ -317,22 +423,6 @@ function makeHTML(lang) {
       setTimeout(() => $('#successBox').style.display = 'none', 3000);
     }
 
-    function renderCard(p) {
-      const agents = Object.entries(p.agents).slice(0, 4);
-      const lines = agents.map(([role, v]) =>
-        '<div class="card-agent"><span class="role">' + role + '</span><span>' + v.model + '</span></div>'
-      ).join('');
-      const aliases = p.aliases.length ? '(' + p.aliases.join(', ') + ')' : '';
-      const cls = p.isCurrent ? 'card active' : 'card';
-      return '<div class="' + cls + '" data-name="' + p.name + '">' +
-        '<div class="card-header">' +
-          '<span class="card-name">' + p.name + '</span>' +
-          (aliases ? '<span class="card-aliases">' + aliases + '</span>' : '') +
-        '</div>' +
-        '<div class="card-agents">' + lines + '</div>' +
-      '</div>';
-    }
-
     function renderCurrent(data) {
       const name = data.name ? t("currentLabel") + data.name : '-';
       const aliases = data.aliases.length ? ' (' + data.aliases.join(', ') + ')' : '';
@@ -343,22 +433,53 @@ function makeHTML(lang) {
 
     async function load() {
       try {
-        const [presetsRes, currentRes] = await Promise.all([
+        const [presetsRes, customRes, currentRes] = await Promise.all([
           fetch('/api/presets'),
+          fetch('/api/custom-presets'),
           fetch('/api/current')
         ]);
         const presets = await presetsRes.json();
+        const custom = await customRes.json();
         const current = await currentRes.json();
 
         renderCurrent(current);
-        $('#grid').innerHTML = presets.map(renderCard).join('');
+        // Combine built-in and custom presets
+        const allPresets = [...presets, ...custom];
+        $('#grid').innerHTML = allPresets.map(p => renderPresetCard(p)).join('');
 
-        $('#grid').querySelectorAll('.card').forEach(card => {
-          card.addEventListener('click', () => switchPreset(card.dataset.name));
+        // Add click handlers for built-in presets
+        $('#grid').querySelectorAll('.card.builtin').forEach(card => {
+          card.addEventListener('click', (e) => {
+            if (e.target.closest('.delete-btn') || e.target.closest('.edit-btn')) return;
+            switchPreset(card.dataset.name);
+          });
         });
       } catch (e) {
         showError(t("failLoad") + ": " + e.message);
       }
+    }
+
+    function renderPresetCard(p) {
+      const agents = Object.entries(p.agents || {}).slice(0, 4);
+      const lines = agents.map(([role, v]) =>
+        '<div class="card-agent"><span class="role">' + role + '</span><span>' + (v.model || v) + '</span></div>'
+      ).join('');
+      const aliases = p.aliases && p.aliases.length ? '(' + p.aliases.join(', ') + ')' : '';
+      const isCustom = p.isCustom;
+      const cls = (p.isCurrent ? 'card active' : 'card') + (isCustom ? ' custom' : ' builtin');
+      let buttons = '';
+      if (isCustom) {
+        buttons = '<button class="delete-btn" title="' + t('delete') + '" onclick="event.stopPropagation(); deletePreset(\\'' + p.name + '\\')">&times;</button>' +
+          '<button class="edit-btn" title="' + t('editPreset') + '" onclick="event.stopPropagation(); editPreset(\\'' + p.name + '\\',' + JSON.stringify(p.agents).replace(/'/g, "\\\\'") + ',' + JSON.stringify(p.categories || {}).replace(/'/g, "\\\\'") + ')">✎</button>';
+      }
+      return '<div class="' + cls + '" data-name="' + p.name + '">' +
+        '<div class="card-header">' +
+          '<span class="card-name">' + p.name + '</span>' +
+          (aliases ? '<span class="card-aliases">' + aliases + '</span>' : '') +
+        '</div>' +
+        '<div class="card-agents">' + lines + '</div>' +
+        buttons +
+      '</div>';
     }
 
     async function switchPreset(name) {
@@ -381,6 +502,7 @@ function makeHTML(lang) {
 
     load();
 
+    // Help modal
     $('#helpBtn').addEventListener('click', () => {
       $('#modalOverlay').classList.add('show');
     });
@@ -390,6 +512,97 @@ function makeHTML(lang) {
     $('#modalOverlay').addEventListener('click', (e) => {
       if (e.target === $('#modalOverlay')) $('#modalOverlay').classList.remove('show');
     });
+
+    // Add/Edit preset modal
+    const formModal = $('#formModalOverlay');
+    const form = $('#presetForm');
+    const editNameInput = $('#editName');
+    const nameInput = $('#presetNameInput');
+    const agentsInput = $('#agentsInput');
+    const categoriesInput = $('#categoriesInput');
+
+    $('#addPresetBtn').addEventListener('click', () => {
+      editNameInput.value = '';
+      $('#formModalTitle').textContent = t('addPreset');
+      nameInput.value = '';
+      nameInput.disabled = false;
+      agentsInput.value = '';
+      categoriesInput.value = '';
+      formModal.classList.add('show');
+    });
+
+    $('#formModalClose').addEventListener('click', () => {
+      formModal.classList.remove('show');
+    });
+    $('#formCancelBtn').addEventListener('click', () => {
+      formModal.classList.remove('show');
+    });
+    formModal.addEventListener('click', (e) => {
+      if (e.target === formModal) formModal.classList.remove('show');
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = nameInput.value.trim();
+      const isEdit = !!editNameInput.value;
+      
+      let agents, categories;
+      try {
+        agents = JSON.parse(agentsInput.value);
+      } catch {
+        showError(t('invalidJson') + ' (agents)');
+        return;
+      }
+      try {
+        categories = categoriesInput.value.trim() ? JSON.parse(categoriesInput.value) : {};
+      } catch {
+        showError(t('invalidJson') + ' (categories)');
+        return;
+      }
+
+      try {
+        let url = '/api/custom-presets';
+        let method = 'POST';
+        if (isEdit) {
+          url = '/api/custom-presets/' + encodeURIComponent(editNameInput.value);
+          method = 'PUT';
+        }
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, agents, categories })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to save');
+        showSuccess(t('saveSuccess'));
+        formModal.classList.remove('show');
+        load();
+      } catch (e) {
+        showError(e.message);
+      }
+    });
+
+    window.editPreset = function(name, agents, categories) {
+      editNameInput.value = name;
+      $('#formModalTitle').textContent = t('editPreset');
+      nameInput.value = name;
+      nameInput.disabled = true;
+      agentsInput.value = JSON.stringify(agents, null, 2);
+      categoriesInput.value = categories ? JSON.stringify(categories, null, 2) : '';
+      formModal.classList.add('show');
+    };
+
+    window.deletePreset = async function(name) {
+      if (!confirm(t('deleteConfirm'))) return;
+      try {
+        const res = await fetch('/api/custom-presets/' + encodeURIComponent(name), { method: 'DELETE' });
+        if (!res.ok) throw new Error('Delete failed');
+        showSuccess(t('deleteSuccess'));
+        load();
+      } catch (e) {
+        showError(e.message);
+      }
+    };
   </script>
 </body>
 </html>`;
@@ -398,7 +611,7 @@ function makeHTML(lang) {
 // ── Server ────────────────────────────────────────────────────────────────────
 function handle(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") {
@@ -477,6 +690,98 @@ function handle(req, res) {
     return;
   }
 
+  // GET /api/custom-presets
+  if (req.method === "GET" && url.pathname === "/api/custom-presets") {
+    const custom = getCustomPresets();
+    const currentName = getCurrentName();
+    const result = custom.map(p => ({
+      name: p.name,
+      isCustom: true,
+      isCurrent: p.name === currentName,
+      agents: p.agents || {},
+      categories: p.categories || {}
+    }));
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(result));
+    return;
+  }
+
+  // POST /api/custom-presets (create)
+  if (req.method === "POST" && url.pathname === "/api/custom-presets") {
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => {
+      try {
+        const { name, agents, categories } = JSON.parse(body);
+        if (!name || !agents) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "name and agents are required" }));
+          return;
+        }
+        if (!/^[a-zA-Z0-9-_]+$/.test(name)) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Invalid name: only letters, numbers, - and _ allowed" }));
+          return;
+        }
+        if (isCustomPreset(name)) {
+          res.writeHead(409, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Preset already exists" }));
+          return;
+        }
+        saveCustomPreset(name, { agents, categories: categories || {} });
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, name }));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  // PUT /api/custom-presets/:name (update)
+  if (req.method === "PUT" && url.pathname.startsWith("/api/custom-presets/")) {
+    const name = decodeURIComponent(url.pathname.replace("/api/custom-presets/", ""));
+    if (!isCustomPreset(name)) {
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Preset not found" }));
+      return;
+    }
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => {
+      try {
+        const { agents, categories } = JSON.parse(body);
+        if (!agents) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "agents is required" }));
+          return;
+        }
+        saveCustomPreset(name, { agents, categories: categories || {} });
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, name }));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  // DELETE /api/custom-presets/:name
+  if (req.method === "DELETE" && url.pathname.startsWith("/api/custom-presets/")) {
+    const name = decodeURIComponent(url.pathname.replace("/api/custom-presets/", ""));
+    if (!isCustomPreset(name)) {
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Preset not found" }));
+      return;
+    }
+    deleteCustomPreset(name);
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ ok: true }));
+    return;
+  }
+
   // 404
   res.writeHead(404);
   res.end("Not Found");
@@ -523,13 +828,3 @@ function openBrowser(url) {
     }
   } catch {}
 }
-
-server.listen(port, HOST, () => {
-  const url = `http://127.0.0.1:${port}`;
-  console.log(`\n  OMO Config Switcher Web UI\n`);
-  console.log(`  Local:  ${url}\n`);
-  console.log(`  Presets: ${PRESET_DIR}`);
-  console.log(`  Config:  ${LIVE_FILE}\n`);
-  console.log(`  Stop: Ctrl+C\n`);
-  openBrowser(url);
-});
