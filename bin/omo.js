@@ -8,6 +8,7 @@ const os = require("os");
 // ── Paths ────────────────────────────────────────────────────────────────────
 const CONFIG_DIR = path.join(os.homedir(), ".config", "opencode");
 const PRESET_DIR = path.join(__dirname, "..", "lib", "presets");
+const HELP_FILE = path.join(__dirname, "..", "lib", "help.json");
 const ROLE_FILE = path.join(CONFIG_DIR, "oh-my-opencode-role.json");
 const ROLE_NAME_FILE = path.join(CONFIG_DIR, "oh-my-opencode-role-name.json");
 const LIVE_FILE = path.join(CONFIG_DIR, "oh-my-opencode.jsonc");
@@ -185,29 +186,30 @@ function switchPreset(input, scope) {
 }
 
 function showHelp() {
-  console.log(`${bold("OMO Config Switcher")}
-${dim("OpenCode oh-my-opencode config preset manager")}
+  const h = JSON.parse(fs.readFileSync(HELP_FILE, "utf8"));
+  const lw = 24;
+  const pw = 10;
+  const sep = dim("  ───────────────────────────────────────────────────────────────");
+  const sep2 = dim("  ─────────────────────────────────────────────────────────────────");
 
-${bold("Usage:")}
-  ${cyan("omo")}              Show current global config
-  ${cyan("omo <preset>")}     Switch to a preset (global)
-  ${cyan("omo -p")}           Show current project config
-  ${cyan("omo <preset> -p")} Switch project config
-  ${cyan("omo -l")}           List all global presets
-  ${cyan("omo -l -p")}        List all project presets
-  ${cyan("omo -h")}           Show this help
+  const uEn = h.usage.map((u) => `  ${cyan(u.cmd.padEnd(lw))} ${u.desc_en}`).join("\n");
+  const uZh = h.usage.map((u) => `  ${cyan(u.cmd.padEnd(lw))} ${u.desc_zh}`).join("\n");
+  const pEn = h.presets.map((p) => `  ${p.name.padEnd(pw)} ${dim("(" + p.alias + ")  " + p.desc_en)}`).join("\n");
+  const pZh = h.presets.map((p) => `  ${p.name.padEnd(pw)} ${dim("(" + p.alias + ")  " + p.desc_zh)}`).join("\n");
 
-${bold("Presets:")}
-  default  ${dim("(d)")}
-  gpt      ${dim("(g)")}
-  gpt-mini ${dim("(gm)")}
-  code     ${dim("(c)")}
-  mimo     ${dim("(m)")}
+  console.log(`${bold(h.title.en)} / ${h.title.zh}
+${dim(h.subtitle.en)}
+${dim(h.subtitle.zh)}
 
-${bold("Notes:")}
-  Global config: ${dim("~/.config/opencode/oh-my-opencode.jsonc")}
-  Project config: ${dim("<cwd>/.opencode/oh-my-opencode.json")}
-  Aliases can be used as shortcuts (e.g. ${cyan("omo m")} = ${cyan("omo mimo")})
+${bold("EN ─────────────────────────────────────────────────────────────")}
+${uEn}
+${sep}
+${pEn}
+
+${bold("中文 ──────────────────────────────────────────────────────────")}
+${uZh}
+${sep2}
+${pZh}
 `);
 }
 
@@ -216,6 +218,10 @@ function parseArgs(args) {
   let action = "show";
   let scope = "global";
   let preset = null;
+  let port = null;
+  let serverFlags = [];
+
+  const VALID_SHORT_FLAGS = new Set(["p", "l", "h", "config", "c", "s"]);
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -225,22 +231,37 @@ function parseArgs(args) {
       action = "list";
     } else if (arg === "-h" || arg === "--help") {
       action = "help";
+    } else if (arg === "-config" || arg === "-c" || arg === "-s") {
+      action = "server";
+      while (i + 1 < args.length) {
+        const next = args[i + 1];
+        if (/^\d+$/.test(next)) {
+          port = next;
+          i++;
+        } else if (next === "-e" || next === "--en") {
+          serverFlags.push(next);
+          i++;
+        } else {
+          break;
+        }
+      }
+    } else if (arg.startsWith("-") && !VALID_SHORT_FLAGS.has(arg.slice(1))) {
+      console.error(`Unknown option: ${arg}`);
+      console.error(`Valid options: -p, -l, -h, -config (or -c, -s)`);
+      console.error("Use 'omo -h' for help");
+      process.exit(1);
     } else if (!arg.startsWith("-")) {
       preset = arg;
       action = "switch";
-    } else {
-      console.error(`Unknown option: ${arg}`);
-      console.error("Use 'omo -h' for help");
-      process.exit(1);
     }
   }
 
-  return { action, scope, preset };
+  return { action, scope, preset, port, serverFlags };
 }
 
 // ── Main ───────────────────────────────────────────────────────────────────────
 function main() {
-  const { action, scope, preset } = parseArgs(process.argv.slice(2));
+  const { action, scope, preset, port, serverFlags } = parseArgs(process.argv.slice(2));
 
   switch (action) {
     case "help":
@@ -252,6 +273,14 @@ function main() {
     case "switch":
       switchPreset(preset, scope);
       break;
+    case "server": {
+      const { spawn } = require("child_process");
+      const srvPath = path.join(__dirname, "omo-server.js");
+      const portArg = port ? [port] : [];
+      const child = spawn("node", [srvPath, ...portArg, ...serverFlags], { stdio: "inherit" });
+      child.on("error", (e) => { console.error(e.message); process.exit(1); });
+      break;
+    }
     case "show":
     default:
       showCurrent(scope);

@@ -46,35 +46,54 @@ Built-in presets covering different scenarios:
 
 | Preset | Alias | Description |
 |---|---|---|
-| `default` | `d` | All MiniMax M2.5 Free, most cost-effective |
-| `gpt` | `g` | All GPT-5.4 / GPT-5.3-codex, requires OpenAI API Key |
-| `gpt-mini` | `gm` | Hephaestus/complex tasks use Copilot GPT-5-mini, others MiniMax |
-| `code` | `c` | Claude Opus 4.5/4.6 for heavy reasoning, GPT-5.4 for vision, GPT-4 for light tasks |
-| `mimo` | `m` | Hephaestus/complex tasks use MiMo V2 Pro Free, others MiniMax M2.5 Free |
+| `default` | `d` | All MiniMax M2.5 Free |
+| `gpt` | `g` | All GPT-5.4 |
+| `gpt-mini` | `gm` | Hephaestus uses Copilot GPT-5-mini |
+| `code` | `c` | Claude Opus 4 for heavy reasoning |
+| `mimo` | `m` | Hephaestus uses MiMo V2 Pro Free |
 
 > **Rule**: NEVER use Sisyphus with GPT (except GPT-5.4). All presets follow this rule.
 
 ## Commands
 
 ```bash
-omo              # Show current global config (with name + alias)
+omo              # Show current global config
 omo <preset>     # Switch global config
 omo -p           # Show current project config
 omo <preset> -p  # Switch project config
 omo -l           # List all global presets
 omo -l -p        # List all project presets
+omo -config      # Start Web UI (also -c / -s)
+omo -config 8080  # Start on specified port
 omo -h           # Show help
 ```
 
-### Alias Usage
+## Web UI (Optional)
+
+A web interface for managing presets via browser:
 
 ```bash
-omo d    # = omo default
-omo g    # = omo gpt
-omo gm   # = omo gpt-mini
-omo c    # = omo code
-omo m    # = omo mimo
+omo -config           # Start Web UI (default port 1314)
+omo -c               # Same as above
+omo -s               # Same as above
+omo -config 3000     # Specify port
 ```
+
+Browser opens automatically at **http://127.0.0.1:1314**
+
+- Shows all preset cards, yellow border = currently active
+- Click a card to switch preset
+- Live display of current config name and aliases
+- Supports Chinese/English
+
+API endpoints:
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/` | Web UI |
+| GET | `/api/presets` | List all presets |
+| GET | `/api/current` | Current active config |
+| POST | `/api/switch` | Switch preset (body: `{"name":"mimo"}`) |
 
 ## Where Config Is Written
 
@@ -91,13 +110,12 @@ omo <preset>
   └─ Write to ~/.config/opencode/oh-my-opencode.jsonc  ← OpenCode reads on startup
 ```
 
-OpenCode reads `~/.config/opencode/oh-my-opencode.jsonc` (or project `.opencode/oh-my-opencode.json`) on each startup. After switching, **restart OpenCode** or run `/config reload` in the TUI to apply changes.
+OpenCode reads config on each startup. After switching, **restart OpenCode** to apply changes.
 
 ## Adding Custom Presets
 
 1. Create a new file in `lib/presets/` (e.g., `mypreset.json`)
 2. Edit `lib/presets/aliases.json` to add alias mappings
-3. Update the preset list in `bin/omo.js` help text (optional)
 
 ```json
 // lib/presets/mypreset.json
@@ -120,7 +138,7 @@ OpenCode reads `~/.config/opencode/oh-my-opencode.jsonc` (or project `.opencode/
   "gpt-mini": ["gm"],
   "code": ["c"],
   "mimo": ["m"],
-  "mypreset": ["mp"]   // Add custom
+  "mypreset": ["mp"]
 }
 ```
 
@@ -142,7 +160,8 @@ rm ~/.config/opencode/oh-my-opencode-role-name.json
 ezcoder-omo-config/
 ├── package.json
 ├── bin/
-│   └── omo.js              # CLI entry point
+│   ├── omo.js              # CLI entry point
+│   └── omo-server.js       # Web UI server
 └── lib/
     └── presets/             # Built-in presets (inside npm package)
         ├── aliases.json

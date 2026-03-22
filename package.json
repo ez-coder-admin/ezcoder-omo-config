@@ -4,11 +4,13 @@
   "description": "OpenCode oh-my-opencode config switcher CLI",
   "preferGlobal": true,
   "bin": {
-    "omo": "./bin/omo.js"
+    "omo": "./bin/omo.js",
+    "omo-server": "./bin/omo-server.js"
   },
   "files": [
     "bin",
-    "lib"
+    "lib",
+    "favicon.ico"
   ],
   "keywords": [
     "opencode",

@@ -1,0 +1,42 @@
+{
+  "title": {
+    "zh": "OMO Config Switcher",
+    "en": "OMO Config Switcher"
+  },
+  "subtitle": {
+    "zh": "OpenCode oh-my-opencode 预设管理器",
+    "en": "OpenCode oh-my-opencode preset manager"
+  },
+  "usage": [
+    { "cmd": "omo", "desc_zh": "查看当前全局配置", "desc_en": "Show current global config" },
+    { "cmd": "omo <preset>", "desc_zh": "切换全局配置", "desc_en": "Switch global config" },
+    { "cmd": "omo -p", "desc_zh": "查看当前项目配置", "desc_en": "Show current project config" },
+    { "cmd": "omo <preset> -p", "desc_zh": "切换项目配置", "desc_en": "Switch project config" },
+    { "cmd": "omo -l", "desc_zh": "列出所有全局预设", "desc_en": "List all global presets" },
+    { "cmd": "omo -l -p", "desc_zh": "列出所有项目预设", "desc_en": "List all project presets" },
+    { "cmd": "omo -config", "desc_zh": "启动 Web UI（也可 -c / -s）", "desc_en": "Start Web UI (also -c / -s)" },
+    { "cmd": "omo -config 8080", "desc_zh": "指定端口启动", "desc_en": "Start on specified port" },
+    { "cmd": "omo -h", "desc_zh": "显示帮助", "desc_en": "Show help" }
+  ],
+  "presets": [
+    { "name": "default", "alias": "d", "desc_zh": "全员 MiniMax M2.5 Free", "desc_en": "All MiniMax M2.5 Free" },
+    { "name": "gpt", "alias": "g", "desc_zh": "全员 GPT-5.4", "desc_en": "All GPT-5.4" },
+    { "name": "gpt-mini", "alias": "gm", "desc_zh": "Hephaestus 用 Copilot GPT-5-mini", "desc_en": "Hephaestus uses Copilot GPT-5-mini" },
+    { "name": "code", "alias": "c", "desc_zh": "Claude Opus 4 做高强度推理", "desc_en": "Claude Opus 4 for heavy reasoning" },
+    { "name": "mimo", "alias": "m", "desc_zh": "Hephaestus 用 MiMo V2 Pro Free", "desc_en": "Hephaestus uses MiMo V2 Pro Free" }
+  ],
+  "helpPage": {
+    "desc_zh": "点击卡片即可切换预设。",
+    "desc_en": "Click a card to switch preset.",
+    "note_zh": "注意：切换预设后需要重启 OpenCode 才能生效。",
+    "note_en": "Note: Changes take effect after restarting OpenCode.",
+    "section_switch_zh": "切换预设",
+    "section_switch_en": "Switch Preset",
+    "section_list_zh": "列出预设",
+    "section_list_en": "List Presets",
+    "section_web_zh": "Web UI",
+    "section_web_en": "Web UI",
+    "github_zh": "GitHub 主页",
+    "github_en": "GitHub Repo"
+  }
+}
