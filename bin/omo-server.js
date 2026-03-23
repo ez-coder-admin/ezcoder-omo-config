@@ -472,23 +472,25 @@ function makeHTML(lang) {
     }
 
     async function load() {
+      console.log('load() called');
       try {
+        console.log('Fetching data...');
         const [presetsRes, customRes, currentRes, orderRes] = await Promise.all([
           fetch('/api/presets'),
           fetch('/api/custom-presets'),
           fetch('/api/current'),
           fetch('/api/preset-order')
         ]);
+        console.log('Responses received:', presetsRes.ok, customRes.ok, currentRes.ok, orderRes.ok);
         const presets = await presetsRes.json();
         const custom = await customRes.json();
         const current = await currentRes.json();
         let order = await orderRes.json();
+        console.log('Data received:', presets.length, 'presets,', custom.length, 'custom, current:', current.name);
         if (!order || !order.length) order = DEFAULT_ORDER;
 
         renderCurrent(current);
-        // Combine built-in and custom presets
         const allPresets = [...presets, ...custom];
-        // Sort by saved order
         allPresets.sort((a, b) => {
           const idxA = order.indexOf(a.name);
           const idxB = order.indexOf(b.name);
@@ -497,17 +499,19 @@ function makeHTML(lang) {
           if (idxB === -1) return -1;
           return idxA - idxB;
         });
+        console.log('Rendering', allPresets.length, 'presets');
         $('#grid').innerHTML = allPresets.map(p => renderPresetCard(p)).join('');
+        console.log('Grid updated');
         initDragDrop();
-
-        // Add click handlers for built-in presets
         $('#grid').querySelectorAll('.card.builtin').forEach(card => {
           card.addEventListener('click', (e) => {
             if (e.target.closest('.delete-btn') || e.target.closest('.edit-btn')) return;
             switchPreset(card.dataset.name);
           });
         });
+        console.log('Done loading');
       } catch (e) {
+        console.error('Error in load():', e);
         showError(t("failLoad") + ": " + e.message);
       }
     }
