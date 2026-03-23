@@ -247,13 +247,36 @@ function makeHTML(lang) {
     .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
     .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; }
     h1 { font-size: 1.5rem; color: #f8fafc; }
-    .lang-btn { display: flex; gap: 0; border-radius: 6px; overflow: hidden; font-size: 0.75rem; }
-    .lang-btn { display: flex; align-items: center; gap: 0.3rem; }
+    .lang-btn { display: flex; align-items: center; gap: 0.3rem; border-radius: 6px; overflow: hidden; }
     .lang-btn a { text-decoration: none; color: #64748b; font-size: 0.75rem; transition: color 0.2s; }
     .lang-btn a.active { color: #f8fafc; font-weight: 700; }
     .lang-btn a:hover:not(.active) { color: #94a3b8; }
     .lang-btn span { color: #334155; font-size: 0.75rem; user-select: none; }
     .subtitle { color: #94a3b8; font-size: 0.875rem; margin-bottom: 2rem; }
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #1e293b;
+      border: 1px solid #38bdf8;
+      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      color: #e2e8f0;
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 1000;
+      pointer-events: none;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .toast.error {
+      border-color: #f87171;
+      color: #fca5a5;
+    }
 
     .current-bar { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; }
     .current-bar .label { color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
@@ -273,6 +296,46 @@ function makeHTML(lang) {
     .card-agent .role { color: #38bdf8; min-width: 90px; }
 
     .loading { text-align: center; padding: 3rem; color: #64748b; }
+
+    .help-btn { position: fixed; bottom: 1.5rem; right: 1.5rem; width: 2.5rem; height: 2.5rem; border-radius: 50%; background: #1e293b; border: 1px solid #334155; color: #64748b; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .help-btn:hover { border-color: #38bdf8; color: #38bdf8; background: #1e293b; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 200; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1.5rem; max-width: 680px; width: 95%; }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .modal-title { font-size: 1rem; font-weight: 600; color: #f8fafc; }
+    .modal-close { background: none; border: none; color: #64748b; font-size: 1.25rem; cursor: pointer; padding: 0; line-height: 1; }
+    .modal-close:hover { color: #f8fafc; }
+    .modal-body { color: #94a3b8; font-size: 0.875rem; line-height: 1.6; }
+    .modal-body p { margin-bottom: 0.75rem; }
+    .modal-body a { color: #38bdf8; }
+    .modal-body strong { color: #e2e8f0; }
+    .modal-github { margin-top: 1rem; text-align: center; }
+    .modal-body code { background: #0f172a; padding: 0.1rem 0.4rem; border-radius: 4px; color: #38bdf8; font-size: 0.8rem; }
+    .header-actions { display: flex; align-items: center; gap: 1rem; }
+    .add-btn { background: #38bdf8; color: #0f172a; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .add-btn:hover { background: #0ea5e9; }
+    .form-group { margin-bottom: 1rem; }
+    .form-label { display: block; color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.375rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .form-input, .form-textarea { width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #e2e8f0; padding: 0.625rem; font-size: 0.875rem; }
+    .form-input:focus, .form-textarea:focus { outline: none; border-color: #38bdf8; }
+    .form-textarea { min-height: 120px; font-family: monospace; }
+    .form-hint { color: #64748b; font-size: 0.75rem; margin-top: 0.375rem; }
+    .form-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.25rem; }
+    .form-btn { padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .form-btn-primary { background: #38bdf8; color: #0f172a; border: none; }
+    .form-btn-primary:hover { background: #0ea5e9; }
+    .form-btn-secondary { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+    .form-btn-secondary:hover { color: #e2e8f0; border-color: #475569; }
+    .delete-btn { position: absolute; top: 0.75rem; right: 0.75rem; background: #7f1d1d; color: #fca5a5; border: none; width: 1.5rem; height: 1.5rem; border-radius: 4px; font-size: 0.875rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .delete-btn:hover { background: #991b1b; color: #fecaca; }
+    .form-section { margin-bottom: 1rem; }
+    .form-section-title { color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .input-grid { display: grid; grid-template-columns: auto 1fr; gap: 0.5rem 1rem; align-items: center; }
+    .input-grid .label { color: #38bdf8; font-size: 0.8rem; }
+    .input-grid .input { background: #0f172a; border: 1px solid #334155; border-radius: 4px; color: #e2e8f0; padding: 0.4rem 0.6rem; font-size: 0.8rem; width: 100%; }
+    .input-grid .input:focus { outline: none; border-color: #38bdf8; }
+    .input-grid .input::placeholder { color: #475569; }
 
     .card.custom { border-style: dashed; }
     .card.custom::before { content: 'Custom'; position: absolute; top: 0.75rem; left: 0.75rem; background: #7c3aed; color: #fff; font-size: 0.625rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px; letter-spacing: 0.05em; }
