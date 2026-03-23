@@ -419,8 +419,6 @@ function makeHTML(lang) {
               <div class="label">quick</div><input type="text" class="input" data-cat="quick" placeholder="optional">
               <div class="label">writing</div><input type="text" class="input" data-cat="writing" placeholder="optional">
             </div>
-          </div>>
-            <div class="form-hint">${t("agentsHint")}</div>
           </div>
           <div class="form-group">
             <label class="form-label" for="categoriesInput">${t("categories")}</label>
