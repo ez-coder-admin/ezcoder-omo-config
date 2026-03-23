@@ -465,13 +465,14 @@ function makeHTML(lang) {
 
     function renderCurrent(data) {
       const name = data.name ? t("currentLabel") + data.name : '-';
-      const aliases = data.aliases.length ? ' (' + data.aliases.join(', ') + ')' : '';
+      const aliases = data.aliases && data.aliases.length ? ' (' + data.aliases.join(', ') + ')' : '';
       $('#currentName').textContent = name;
       $('#currentAliases').textContent = aliases;
       currentName = data.name || '';
     }
 
     async function load() {
+      console.log('load() starting...');
       try {
         // 直接从 API 获取数据
         const res = await fetch('/api/presets');
@@ -500,7 +501,9 @@ function makeHTML(lang) {
         
         // 渲染卡片
         const grid = $('#grid');
+        console.log('Rendering', allPresets.length, 'presets');
         grid.innerHTML = allPresets.map(p => renderPresetCard(p)).join('');
+        console.log('Grid updated');
         
         // 初始化拖拽
         initDragDrop();
