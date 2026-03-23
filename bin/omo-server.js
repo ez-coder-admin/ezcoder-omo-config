@@ -394,8 +394,32 @@ function makeHTML(lang) {
             <div class="form-hint">${t("presetNameHint")}</div>
           </div>
           <div class="form-group">
-            <label class="form-label" for="agentsInput">${t("agents")}</label>
-            <textarea class="form-textarea" id="agentsInput" required placeholder='{"Sisyphus": {"model": "claude-3-5-sonnet-20241002"}}'></textarea>
+            <div class="form-section">
+            <div class="form-section-title">Agents</div>
+            <div class="input-grid">
+              <div class="label">sisyphus</div><input type="text" class="input" data-agent="sisyphus" placeholder="model">
+              <div class="label">hephaestus</div><input type="text" class="input" data-agent="hephaestus" placeholder="model">
+              <div class="label">oracle</div><input type="text" class="input" data-agent="oracle" placeholder="model">
+              <div class="label">librarian</div><input type="text" class="input" data-agent="librarian" placeholder="model">
+              <div class="label">explore</div><input type="text" class="input" data-agent="explore" placeholder="model">
+              <div class="label">prometheus</div><input type="text" class="input" data-agent="prometheus" placeholder="model">
+              <div class="label">metis</div><input type="text" class="input" data-agent="metis" placeholder="model">
+              <div class="label">momus</div><input type="text" class="input" data-agent="momus" placeholder="model">
+              <div class="label">atlas</div><input type="text" class="input" data-agent="atlas" placeholder="model">
+              <div class="label">multimodal-looker</div><input type="text" class="input" data-agent="multimodal-looker" placeholder="model">
+            </div>
+          </div>
+          <div class="form-section">
+            <div class="form-section-title">Categories（可选）</div>
+            <div class="input-grid">
+              <div class="label">visual-engineering</div><input type="text" class="input" data-cat="visual-engineering" placeholder="optional">
+              <div class="label">ultrabrain</div><input type="text" class="input" data-cat="ultrabrain" placeholder="optional">
+              <div class="label">deep</div><input type="text" class="input" data-cat="deep" placeholder="optional">
+              <div class="label">artistry</div><input type="text" class="input" data-cat="artistry" placeholder="optional">
+              <div class="label">quick</div><input type="text" class="input" data-cat="quick" placeholder="optional">
+              <div class="label">writing</div><input type="text" class="input" data-cat="writing" placeholder="optional">
+            </div>
+          </div>>
             <div class="form-hint">${t("agentsHint")}</div>
           </div>
           <div class="form-group">
@@ -417,6 +441,7 @@ function makeHTML(lang) {
   <script>
     const pageLang = "${lang}";
     const LANG = ${JSON.stringify(LANG)};
+    const DEFAULT_ORDER = ${JSON.stringify(DEFAULT_ORDER)};
     const t = (key) => LANG[key] && LANG[key][pageLang] || LANG[key] && LANG[key].en || key;
     const $ = (s) => document.querySelector(s);
     let currentName = '';
