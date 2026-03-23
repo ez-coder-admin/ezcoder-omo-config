@@ -64,13 +64,3 @@ ezcoder-omo-config/
 2. **提示**: 使用 `toast()` 函数，不使用 `showError()`/`showSuccess()` (已移除)
 3. **版本号**: 每次 `npm publish` 前需要 `npm version patch`
 4. **语法检查**: `node --check bin/omo-server.js`
-
-## 已知问题
-
-- 页面首次加载可能显示"加载中..."，需要浏览器控制台调试
-
-## 测试文件
-
-- `C:/Users/longl/omo-test.html` - 测试 fetch API
-- `C:/Users/longl/omo-minimal.html` - 最小化测试
-- `C:/Users/longl/omo-js-test.html` - JS 执行测试
