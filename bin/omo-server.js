@@ -472,24 +472,22 @@ function makeHTML(lang) {
     }
 
     async function load() {
-      console.log('load() called');
       try {
-        console.log('Fetching data...');
-        const [presetsRes, customRes, currentRes, orderRes] = await Promise.all([
-          fetch('/api/presets'),
-          fetch('/api/custom-presets'),
-          fetch('/api/current'),
-          fetch('/api/preset-order')
-        ]);
-        console.log('Responses received:', presetsRes.ok, customRes.ok, currentRes.ok, orderRes.ok);
-        const presets = await presetsRes.json();
+        // 直接从 API 获取数据
+        const res = await fetch('/api/presets');
+        const presets = await res.json();
+        const customRes = await fetch('/api/custom-presets');
         const custom = await customRes.json();
+        const currentRes = await fetch('/api/current');
         const current = await currentRes.json();
+        const orderRes = await fetch('/api/preset-order');
         let order = await orderRes.json();
-        console.log('Data received:', presets.length, 'presets,', custom.length, 'custom, current:', current.name);
         if (!order || !order.length) order = DEFAULT_ORDER;
 
+        // 渲染当前配置
         renderCurrent(current);
+        
+        // 合并并排序预设
         const allPresets = [...presets, ...custom];
         allPresets.sort((a, b) => {
           const idxA = order.indexOf(a.name);
@@ -499,20 +497,24 @@ function makeHTML(lang) {
           if (idxB === -1) return -1;
           return idxA - idxB;
         });
-        console.log('Rendering', allPresets.length, 'presets');
-        $('#grid').innerHTML = allPresets.map(p => renderPresetCard(p)).join('');
-        console.log('Grid updated');
+        
+        // 渲染卡片
+        const grid = $('#grid');
+        grid.innerHTML = allPresets.map(p => renderPresetCard(p)).join('');
+        
+        // 初始化拖拽
         initDragDrop();
-        $('#grid').querySelectorAll('.card.builtin').forEach(card => {
+        
+        // 添加点击事件
+        grid.querySelectorAll('.card.builtin').forEach(card => {
           card.addEventListener('click', (e) => {
             if (e.target.closest('.delete-btn') || e.target.closest('.edit-btn')) return;
             switchPreset(card.dataset.name);
           });
         });
-        console.log('Done loading');
       } catch (e) {
-        console.error('Error in load():', e);
-        showError(t("failLoad") + ": " + e.message);
+        console.error('Load error:', e);
+        showError('加载失败: ' + e.message);
       }
     }
 
