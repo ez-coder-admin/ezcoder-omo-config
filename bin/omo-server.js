@@ -690,8 +690,23 @@ function makeHTML(lang) {
       $('#formModalTitle').textContent = t('editPreset');
       nameInput.value = name;
       nameInput.disabled = true;
-      agentsInput.value = JSON.stringify(agents, null, 2);
-      categoriesInput.value = categories ? JSON.stringify(categories, null, 2) : '';
+      // 清空所有 input fields
+      document.querySelectorAll('[data-agent]').forEach(i => i.value = '');
+      document.querySelectorAll('[data-cat]').forEach(i => i.value = '');
+      // 填充 agents
+      if (agents) {
+        Object.entries(agents).forEach(([key, val]) => {
+          const input = document.querySelector('[data-agent="' + key + '"]');
+          if (input) input.value = val.model || '';
+        });
+      }
+      // 填充 categories
+      if (categories) {
+        Object.entries(categories).forEach(([key, val]) => {
+          const input = document.querySelector('[data-cat="' + key + '"]');
+          if (input) input.value = val.model || '';
+        });
+      }
       formModal.classList.add('show');
     };
 
