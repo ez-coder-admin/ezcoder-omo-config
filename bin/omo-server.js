@@ -44,6 +44,8 @@ function deleteCustomPreset(name) {
 }
 
 function isCustomPreset(name) {
+  return fs.existsSync(path.join(CUSTOM_PRESETS_DIR, `${name}.json`));
+}
 
 function readOrder() {
   try { return JSON.parse(fs.readFileSync(ORDER_FILE, "utf8")); } catch { return null; }
@@ -51,8 +53,6 @@ function readOrder() {
 
 function saveOrder(order) {
   fs.writeFileSync(ORDER_FILE, JSON.stringify(order, null, 2), "utf8");
-}
-  return fs.existsSync(path.join(CUSTOM_PRESETS_DIR, `${name}.json`));
 }
 
 // ── Help Data ─────────────────────────────────────────────────────────────────
@@ -605,33 +605,7 @@ function makeHTML(lang) {
         showSuccess(t("switchTo") + name);
         load();
         toast(t("switchDone"));
-      }
-
-    function initDragDrop() {
-      const grid = document.getElementById('grid');
-      let dragged = null;
-      grid.querySelectorAll('.card').forEach(card => {
-        card.addEventListener('dragstart', e => { dragged = card; card.classList.add('dragging'); });
-        card.addEventListener('dragend', () => { card.classList.remove('dragging'); dragged = null; });
-        card.addEventListener('dragover', e => { e.preventDefault(); card.classList.add('drag-over'); });
-        card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
-        card.addEventListener('drop', e => {
-          e.preventDefault();
-          card.classList.remove('drag-over');
-          if (dragged && dragged !== card) {
-            const all = [...grid.querySelectorAll('.card')];
-            const from = all.indexOf(dragged);
-            const to = all.indexOf(card);
-            if (from < to) card.parentNode.insertBefore(dragged, card.nextSibling);
-            else card.parentNode.insertBefore(dragged, card);
-            const order = [...grid.querySelectorAll('.card')].map(c => c.dataset.name);
-            fetch('/api/preset-order', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(order) });
-          }
-        });
-      });
-    }
-    initDragDrop();
- catch (e) {
+      } catch (e) {
         showError(e.message);
       }
     }
