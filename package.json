@@ -1,6 +1,6 @@
 {
   "name": "ezcoder-omo-config",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "OpenCode oh-my-opencode config switcher CLI",
   "preferGlobal": true,
   "bin": {
