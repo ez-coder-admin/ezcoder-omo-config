@@ -297,6 +297,14 @@ function makeHTML(lang) {
     .modal-body strong { color: #e2e8f0; }
     .modal-github { margin-top: 1rem; text-align: center; }
     .modal-body code { background: #0f172a; padding: 0.1rem 0.4rem; border-radius: 4px; color: #38bdf8; font-size: 0.8rem; }
+    .modal { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1.5rem; max-width: 680px; width: 95%; }
+    .form-section { margin-bottom: 1rem; }
+    .form-section-title { color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .input-grid { display: grid; grid-template-columns: auto 1fr; gap: 0.5rem 1rem; align-items: center; }
+    .input-grid .label { color: #38bdf8; font-size: 0.8rem; }
+    .input-grid .input { background: #0f172a; border: 1px solid #334155; border-radius: 4px; color: #e2e8f0; padding: 0.4rem 0.6rem; font-size: 0.8rem; width: 100%; }
+    .input-grid .input:focus { outline: none; border-color: #38bdf8; }
+    .input-grid .input::placeholder { color: #475569; }
 
     .header-actions { display: flex; align-items: center; gap: 1rem; }
     .add-btn { background: #38bdf8; color: #0f172a; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
@@ -394,31 +402,14 @@ function makeHTML(lang) {
             <div class="form-hint">${t("presetNameHint")}</div>
           </div>
           <div class="form-group">
-            <div class="form-section">
-            <div class="form-section-title">Agents</div>
-            <div class="input-grid">
-              <div class="label">sisyphus</div><input type="text" class="input" data-agent="sisyphus" placeholder="model">
-              <div class="label">hephaestus</div><input type="text" class="input" data-agent="hephaestus" placeholder="model">
-              <div class="label">oracle</div><input type="text" class="input" data-agent="oracle" placeholder="model">
-              <div class="label">librarian</div><input type="text" class="input" data-agent="librarian" placeholder="model">
-              <div class="label">explore</div><input type="text" class="input" data-agent="explore" placeholder="model">
-              <div class="label">prometheus</div><input type="text" class="input" data-agent="prometheus" placeholder="model">
-              <div class="label">metis</div><input type="text" class="input" data-agent="metis" placeholder="model">
-              <div class="label">momus</div><input type="text" class="input" data-agent="momus" placeholder="model">
-              <div class="label">atlas</div><input type="text" class="input" data-agent="atlas" placeholder="model">
-              <div class="label">multimodal-looker</div><input type="text" class="input" data-agent="multimodal-looker" placeholder="model">
-            </div>
+            <label class="form-label" for="agentsInput">${t("agents")}</label>
+            <textarea class="form-textarea" id="agentsInput" placeholder='{"Sisyphus": {"model": "claude-3-5-sonnet-20241002"}}'></textarea>
+            <div class="form-hint">${t("agentsHint")}</div>
           </div>
-          <div class="form-section">
-            <div class="form-section-title">Categories（可选）</div>
-            <div class="input-grid">
-              <div class="label">visual-engineering</div><input type="text" class="input" data-cat="visual-engineering" placeholder="optional">
-              <div class="label">ultrabrain</div><input type="text" class="input" data-cat="ultrabrain" placeholder="optional">
-              <div class="label">deep</div><input type="text" class="input" data-cat="deep" placeholder="optional">
-              <div class="label">artistry</div><input type="text" class="input" data-cat="artistry" placeholder="optional">
-              <div class="label">quick</div><input type="text" class="input" data-cat="quick" placeholder="optional">
-              <div class="label">writing</div><input type="text" class="input" data-cat="writing" placeholder="optional">
-            </div>
+          <div class="form-group">
+            <label class="form-label" for="categoriesInput">${t("categories")}</label>
+            <textarea class="form-textarea" id="categoriesInput" placeholder='{"deep": "ultrabrain"}'></textarea>
+            <div class="form-hint">${t("categoriesHint")}</div>
           </div>
           <div class="form-actions">
             <button type="button" class="form-btn form-btn-secondary" id="formCancelBtn">${t("cancel")}</button>
@@ -630,17 +621,16 @@ function makeHTML(lang) {
     const form = $('#presetForm');
     const editNameInput = $('#editName');
     const nameInput = $('#presetNameInput');
-    // const agentsInput = $('#agentsInput'); // 已废弃，使用 data-agent inputs
-    // const categoriesInput = $('#categoriesInput'); // 已废弃，使用 data-cat inputs
+    const agentsInput = $('#agentsInput');
+    const categoriesInput = $('#categoriesInput');
 
     $('#addPresetBtn').addEventListener('click', () => {
       editNameInput.value = '';
       $('#formModalTitle').textContent = t('addPreset');
       nameInput.value = '';
       nameInput.disabled = false;
-      // 清空 individual input fields
-      document.querySelectorAll('[data-agent]').forEach(i => i.value = '');
-      document.querySelectorAll('[data-cat]').forEach(i => i.value = '');
+      agentsInput.value = '';
+      categoriesInput.value = '';
       formModal.classList.add('show');
     });
 
@@ -659,19 +649,19 @@ function makeHTML(lang) {
       const name = nameInput.value.trim();
       const isEdit = !!editNameInput.value;
       
-      // 从 individual input fields 读取 agents
-      const agents = {};
-      document.querySelectorAll('[data-agent]').forEach(input => {
-        const m = input.value.trim();
-        if (m) { agents[input.dataset.agent] = { model: m }; }
-      });
-      
-      // 从 individual input fields 读取 categories
-      const categories = {};
-      document.querySelectorAll('[data-cat]').forEach(input => {
-        const m = input.value.trim();
-        if (m) { categories[input.dataset.cat] = { model: m }; }
-      });
+      let agents, categories;
+      try {
+        agents = JSON.parse(agentsInput.value);
+      } catch {
+        showError(t('invalidJson') + ' (agents)');
+        return;
+      }
+      try {
+        categories = categoriesInput.value.trim() ? JSON.parse(categoriesInput.value) : {};
+      } catch {
+        showError(t('invalidJson') + ' (categories)');
+        return;
+      }
 
       try {
         let url = '/api/custom-presets';
