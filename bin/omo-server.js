@@ -15,6 +15,8 @@ const CONFIG_DIR = path.join(os.homedir(), ".config", "opencode");
 const LIVE_FILE = path.join(CONFIG_DIR, "oh-my-opencode.jsonc");
 const ROLE_NAME_FILE = path.join(CONFIG_DIR, "oh-my-opencode-role-name.json");
 const CUSTOM_PRESETS_DIR = path.join(CONFIG_DIR, "omo-custom-presets");
+const ORDER_FILE = path.join(CONFIG_DIR, "omo-preset-order.json");
+const DEFAULT_ORDER = ["default", "mimo", "gpt-mini", "gpt", "code"];
 
 // Ensure custom presets directory exists
 if (!fs.existsSync(CUSTOM_PRESETS_DIR)) {
@@ -42,6 +44,14 @@ function deleteCustomPreset(name) {
 }
 
 function isCustomPreset(name) {
+
+function readOrder() {
+  try { return JSON.parse(fs.readFileSync(ORDER_FILE, "utf8")); } catch { return null; }
+}
+
+function saveOrder(order) {
+  fs.writeFileSync(ORDER_FILE, JSON.stringify(order, null, 2), "utf8");
+}
   return fs.existsSync(path.join(CUSTOM_PRESETS_DIR, `${name}.json`));
 }
 
@@ -201,6 +211,10 @@ const LANG = {
   editPreset: { zh: "编辑配置", en: "Edit Preset" },
   presetName: { zh: "配置名称", en: "Preset Name" },
   presetNameHint: { zh: "只允许字母、数字、下划线、连字符", en: "Letters, numbers, - and _ only" },
+  presetNote: { zh: "备注（可选）", en: "Note (Optional)" },
+  presetNoteHint: { zh: "给这个配置添加备注", en: "Add a note for this preset" },
+  presetAliases: { zh: "别名（可选）", en: "Aliases (Optional)" },
+  presetAliasesHint: { zh: "逗号分隔，如: my, test", en: "Comma separated, e.g.: my, test" },
   agents: { zh: "Agents (JSON)", en: "Agents (JSON)" },
   agentsHint: { zh: "键值对格式，如: {\"Sisyphus\": {\"model\": \"claude-3-5-sonnet-20241002\"}}", en: "Key-value format, e.g.: {\"Sisyphus\": {\"model\": \"claude-3-5-sonnet-20241002\"}}" },
   categories: { zh: "Categories (JSON)", en: "Categories (JSON)" },
@@ -305,6 +319,9 @@ function makeHTML(lang) {
     .card.custom::before { content: 'Custom'; position: absolute; top: 0.75rem; left: 0.75rem; background: #7c3aed; color: #fff; font-size: 0.625rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px; letter-spacing: 0.05em; }
     .edit-btn { position: absolute; bottom: 0.75rem; right: 0.75rem; background: #1e293b; color: #64748b; border: 1px solid #334155; width: 1.5rem; height: 1.5rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     .edit-btn:hover { border-color: #38bdf8; color: #38bdf8; }
+    .card { cursor: grab; }
+    .card:active { cursor: grabbing; }
+    .card.dragging { opacity: 0.5; transform: scale(0.98); }
 
   </style>
 </head>
@@ -433,19 +450,32 @@ function makeHTML(lang) {
 
     async function load() {
       try {
-        const [presetsRes, customRes, currentRes] = await Promise.all([
+        const [presetsRes, customRes, currentRes, orderRes] = await Promise.all([
           fetch('/api/presets'),
           fetch('/api/custom-presets'),
-          fetch('/api/current')
+          fetch('/api/current'),
+          fetch('/api/preset-order')
         ]);
         const presets = await presetsRes.json();
         const custom = await customRes.json();
         const current = await currentRes.json();
+        let order = await orderRes.json();
+        if (!order || !order.length) order = DEFAULT_ORDER;
 
         renderCurrent(current);
         // Combine built-in and custom presets
         const allPresets = [...presets, ...custom];
+        // Sort by saved order
+        allPresets.sort((a, b) => {
+          const idxA = order.indexOf(a.name);
+          const idxB = order.indexOf(b.name);
+          if (idxA === -1 && idxB === -1) return a.name.localeCompare(b.name);
+          if (idxA === -1) return 1;
+          if (idxB === -1) return -1;
+          return idxA - idxB;
+        });
         $('#grid').innerHTML = allPresets.map(p => renderPresetCard(p)).join('');
+        initDragDrop();
 
         // Add click handlers for built-in presets
         $('#grid').querySelectorAll('.card.builtin').forEach(card => {
@@ -459,6 +489,60 @@ function makeHTML(lang) {
       }
     }
 
+    function initDragDrop() {
+      const grid = $('#grid');
+      let dragSrcEl = null;
+
+      grid.addEventListener('dragstart', (e) => {
+        if (!e.target.classList.contains('card')) return;
+        dragSrcEl = e.target;
+        e.target.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+
+      grid.addEventListener('dragend', (e) => {
+        if (!e.target.classList.contains('card')) return;
+        e.target.classList.remove('dragging');
+      });
+
+      grid.addEventListener('dragover', (e) => {
+        if (e.preventDefault) e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        return false;
+      });
+
+      grid.addEventListener('drop', async (e) => {
+        if (e.stopPropagation) e.stopPropagation();
+        const target = e.target.closest('.card');
+        if (!target || !dragSrcEl || target === dragSrcEl) return false;
+
+        const cards = Array.from(grid.querySelectorAll('.card'));
+        const fromIdx = cards.indexOf(dragSrcEl);
+        const toIdx = cards.indexOf(target);
+        if (fromIdx === -1 || toIdx === -1) return;
+
+        // Reorder in DOM
+        if (fromIdx < toIdx) {
+          target.parentNode.insertBefore(dragSrcEl, target.nextSibling);
+        } else {
+          target.parentNode.insertBefore(dragSrcEl, target);
+        }
+
+        // Save new order
+        const newOrder = Array.from(grid.querySelectorAll('.card')).map(c => c.dataset.name);
+        try {
+          await fetch('/api/preset-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order: newOrder })
+          });
+        } catch (err) {
+          console.error('Failed to save order:', err);
+        }
+        return false;
+      });
+    }
+
     function renderPresetCard(p) {
       const agents = Object.entries(p.agents || {}).slice(0, 4);
       const lines = agents.map(([role, v]) =>
@@ -468,11 +552,12 @@ function makeHTML(lang) {
       const isCustom = p.isCustom;
       const cls = (p.isCurrent ? 'card active' : 'card') + (isCustom ? ' custom' : ' builtin');
       let buttons = '';
-      if (isCustom) {
+      const isEditable = p.name !== 'default';
+      if (isEditable && isCustom) {
         buttons = '<button class="delete-btn" title="' + t('delete') + '" onclick="event.stopPropagation(); deletePreset(\\'' + p.name + '\\')">&times;</button>' +
           '<button class="edit-btn" title="' + t('editPreset') + '" onclick="event.stopPropagation(); editPreset(\\'' + p.name + '\\',' + JSON.stringify(p.agents).replace(/'/g, "\\\\'") + ',' + JSON.stringify(p.categories || {}).replace(/'/g, "\\\\'") + ')">✎</button>';
       }
-      return '<div class="' + cls + '" data-name="' + p.name + '">' +
+      return '<div class="' + cls + '" data-name="' + p.name + '" draggable="true">' +
         '<div class="card-header">' +
           '<span class="card-name">' + p.name + '</span>' +
           (aliases ? '<span class="card-aliases">' + aliases + '</span>' : '') +
@@ -495,7 +580,33 @@ function makeHTML(lang) {
         showSuccess(t("switchTo") + name);
         load();
         toast(t("switchDone"));
-      } catch (e) {
+      }
+
+    function initDragDrop() {
+      const grid = document.getElementById('grid');
+      let dragged = null;
+      grid.querySelectorAll('.card').forEach(card => {
+        card.addEventListener('dragstart', e => { dragged = card; card.classList.add('dragging'); });
+        card.addEventListener('dragend', () => { card.classList.remove('dragging'); dragged = null; });
+        card.addEventListener('dragover', e => { e.preventDefault(); card.classList.add('drag-over'); });
+        card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+        card.addEventListener('drop', e => {
+          e.preventDefault();
+          card.classList.remove('drag-over');
+          if (dragged && dragged !== card) {
+            const all = [...grid.querySelectorAll('.card')];
+            const from = all.indexOf(dragged);
+            const to = all.indexOf(card);
+            if (from < to) card.parentNode.insertBefore(dragged, card.nextSibling);
+            else card.parentNode.insertBefore(dragged, card);
+            const order = [...grid.querySelectorAll('.card')].map(c => c.dataset.name);
+            fetch('/api/preset-order', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(order) });
+          }
+        });
+      });
+    }
+    initDragDrop();
+ catch (e) {
         showError(e.message);
       }
     }
@@ -779,6 +890,37 @@ function handle(req, res) {
     deleteCustomPreset(name);
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ ok: true }));
+    return;
+  }
+
+  // GET /api/preset-order
+  if (req.method === "GET" && url.pathname === "/api/preset-order") {
+    const order = readOrder();
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(order || DEFAULT_ORDER));
+    return;
+  }
+
+  // POST /api/preset-order
+  if (req.method === "POST" && url.pathname === "/api/preset-order") {
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => {
+      try {
+        const { order } = JSON.parse(body);
+        if (!Array.isArray(order)) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "order must be an array" }));
+          return;
+        }
+        saveOrder(order);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
     return;
   }
 
