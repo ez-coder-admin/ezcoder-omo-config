@@ -420,11 +420,6 @@ function makeHTML(lang) {
               <div class="label">writing</div><input type="text" class="input" data-cat="writing" placeholder="optional">
             </div>
           </div>
-          <div class="form-group">
-            <label class="form-label" for="categoriesInput">${t("categories")}</label>
-            <textarea class="form-textarea" id="categoriesInput" placeholder='{"deep": "ultrabrain"}'></textarea>
-            <div class="form-hint">${t("categoriesHint")}</div>
-          </div>
           <div class="form-actions">
             <button type="button" class="form-btn form-btn-secondary" id="formCancelBtn">${t("cancel")}</button>
             <button type="submit" class="form-btn form-btn-primary">${t("save")}</button>
@@ -635,16 +630,17 @@ function makeHTML(lang) {
     const form = $('#presetForm');
     const editNameInput = $('#editName');
     const nameInput = $('#presetNameInput');
-    const agentsInput = $('#agentsInput');
-    const categoriesInput = $('#categoriesInput');
+    // const agentsInput = $('#agentsInput'); // 已废弃，使用 data-agent inputs
+    // const categoriesInput = $('#categoriesInput'); // 已废弃，使用 data-cat inputs
 
     $('#addPresetBtn').addEventListener('click', () => {
       editNameInput.value = '';
       $('#formModalTitle').textContent = t('addPreset');
       nameInput.value = '';
       nameInput.disabled = false;
-      agentsInput.value = '';
-      categoriesInput.value = '';
+      // 清空 individual input fields
+      document.querySelectorAll('[data-agent]').forEach(i => i.value = '');
+      document.querySelectorAll('[data-cat]').forEach(i => i.value = '');
       formModal.classList.add('show');
     });
 
@@ -663,19 +659,19 @@ function makeHTML(lang) {
       const name = nameInput.value.trim();
       const isEdit = !!editNameInput.value;
       
-      let agents, categories;
-      try {
-        agents = JSON.parse(agentsInput.value);
-      } catch {
-        showError(t('invalidJson') + ' (agents)');
-        return;
-      }
-      try {
-        categories = categoriesInput.value.trim() ? JSON.parse(categoriesInput.value) : {};
-      } catch {
-        showError(t('invalidJson') + ' (categories)');
-        return;
-      }
+      // 从 individual input fields 读取 agents
+      const agents = {};
+      document.querySelectorAll('[data-agent]').forEach(input => {
+        const m = input.value.trim();
+        if (m) { agents[input.dataset.agent] = { model: m }; }
+      });
+      
+      // 从 individual input fields 读取 categories
+      const categories = {};
+      document.querySelectorAll('[data-cat]').forEach(input => {
+        const m = input.value.trim();
+        if (m) { categories[input.dataset.cat] = { model: m }; }
+      });
 
       try {
         let url = '/api/custom-presets';
